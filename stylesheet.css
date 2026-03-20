@@ -1,0 +1,195 @@
+.gtime-root-item {
+  padding: 0;
+}
+
+.gtime-panel-layout {
+  spacing: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  transition-duration: 180ms;
+}
+
+.gtime-panel-label {
+  font-weight: 700;
+}
+
+.gtime-panel-layout.gtime-panel-warning {
+  background-color: rgba(246, 211, 45, 0.18);
+}
+
+.gtime-panel-layout.gtime-panel-warning .system-status-icon,
+.gtime-panel-layout.gtime-panel-warning .gtime-panel-label {
+  color: #f6d32d;
+}
+
+.gtime-panel-layout.gtime-panel-critical {
+  background-color: rgba(224, 27, 36, 0.22);
+}
+
+.gtime-panel-layout.gtime-panel-critical .system-status-icon,
+.gtime-panel-layout.gtime-panel-critical .gtime-panel-label {
+  color: #ff7878;
+}
+
+.gtime-panel-layout.gtime-panel-critical-blink {
+  opacity: 0.55;
+}
+
+.gtime-container {
+  min-width: 320px;
+  padding: 14px;
+  spacing: 8px;
+  border-radius: 14px;
+  background-color: #1f2228;
+  color: #e6e8ec;
+}
+
+.gtime-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e8ebf0;
+  text-align: center;
+}
+
+.gtime-section-title-spaced {
+  margin-top: 12px;
+}
+
+.gtime-quick-grid {
+  spacing: 6px;
+}
+
+.gtime-quick-row {
+  spacing: 12px;
+}
+
+.gtime-quick-button {
+  background-color: #2c3138;
+  color: #cfd5de;
+  border: 1px solid #3a4048;
+  border-radius: 10px;
+  padding: 9px 6px;
+  font-size: 12px;
+  font-weight: 600;
+
+  min-width: 64px;
+  text-align: center;
+}
+
+.gtime-quick-button:hover,
+.gtime-quick-button:focus {
+  background-color: #383f48;
+}
+
+.gtime-quick-button:insensitive {
+  opacity: 0.5;
+}
+
+.gtime-picker-row {
+  spacing: 8px;
+  margin-top: 4px;
+}
+
+.gtime-colon {
+  font-size: 38px;
+  font-weight: 300;
+  color: #9aa4b3;
+  margin-top: 0;
+}
+
+.gtime-time-column {
+  min-width: 90px;
+  border-radius: 12px;
+  border: 1px solid #404650;
+  background-color: #2a2f37;
+}
+
+.gtime-time-column-active {
+  border: 2px solid #3584e4;
+}
+
+.gtime-step-button {
+  border-radius: 0;
+  background-color: transparent;
+  color: #dce1e8;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 6px;
+}
+
+.gtime-step-button-top {
+  border-width: 0 0 1px 0;
+  border-style: solid;
+  border-color: #444b55;
+}
+
+.gtime-step-button-bottom {
+  border-width: 1px 0 0 0;
+  border-style: solid;
+  border-color: #444b55;
+}
+
+.gtime-step-button:hover,
+.gtime-step-button:focus {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.gtime-step-button:insensitive {
+  opacity: 0.5;
+}
+
+.gtime-value-entry {
+  font-size: 46px;
+  font-weight: 300;
+  color: #f2f4f8;
+  padding: 8px 4px;
+  text-align: center;
+  background-color: transparent;
+  border: none;
+}
+
+.gtime-value-entry:focus {
+  border: none;
+}
+
+.gtime-actions-row {
+  margin-top: 14px;
+  spacing: 12px;
+}
+
+.gtime-start-button {
+  padding: 10px 24px;
+  border-width: 0;
+  border-radius: 999px;
+  background-color: #3584e4;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.gtime-start-button:hover,
+.gtime-start-button:focus {
+  background-color: #4a90d9;
+}
+
+.gtime-start-button-paused {
+  background-color: #e01b24;
+}
+
+.gtime-start-button-paused:hover,
+.gtime-start-button-paused:focus {
+  background-color: #c01c28;
+}
+
+.gtime-reset-button {
+  padding: 10px;
+  border-radius: 999px;
+  background-color: #2c3138;
+  color: #cfd5de;
+}
+
+.gtime-reset-button:hover,
+.gtime-reset-button:focus {
+  background-color: #383f48;
+}

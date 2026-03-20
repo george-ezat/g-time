@@ -1,0 +1,8 @@
+{
+  "name": "g-time",
+  "description": "A quick and precise timer for GNOME Shell.",
+  "uuid": "g-time@george-ezat.github.io",
+  "shell-version": [
+    "46"
+  ]
+}
