@@ -40,6 +40,7 @@ const Indicator = GObject.registerClass(
   class Indicator extends PanelMenu.Button {
     _init() {
       super._init(0.0, _("g-time Indicator"));
+      this.add_style_class_name("gtime-panel-button");
 
       this._time = { hours: 0, minutes: 0, seconds: 0 };
       this._timerId = null;
@@ -312,6 +313,23 @@ const Indicator = GObject.registerClass(
         `${this._time.seconds}`.padStart(2, "0"),
       );
       this._isSyncingEntries = false;
+      this._updateStartButtonState();
+    }
+
+    _hasConfiguredTime() {
+      return this._time.hours > 0 || this._time.minutes > 0 || this._time.seconds > 0;
+    }
+
+    _updateStartButtonState() {
+      const canStart = this._timerId || this._remainingSeconds > 0 || this._hasConfiguredTime();
+
+      this._startButton.reactive = Boolean(canStart);
+      this._startButton.can_focus = Boolean(canStart);
+
+      if (canStart)
+        this._startButton.remove_style_class_name("gtime-start-button-disabled");
+      else
+        this._startButton.add_style_class_name("gtime-start-button-disabled");
     }
 
     _onValueEntryChanged(type, entry) {
@@ -330,6 +348,7 @@ const Indicator = GObject.registerClass(
         : Math.min(MAX_HOURS, Number.parseInt(digitsOnly, 10));
 
       this._normalizeTime();
+      this._updateStartButtonState();
     }
 
     _normalizeTime() {
@@ -433,6 +452,8 @@ const Indicator = GObject.registerClass(
           GLib.Source.set_name_by_id(this._timerId, "[g-time] countdown");
         }
       }
+
+      this._updateStartButtonState();
     }
 
     _tick() {
@@ -485,9 +506,9 @@ const Indicator = GObject.registerClass(
     }
 
     _clearPanelAlertState() {
-      this._panelLayout.remove_style_class_name("gtime-panel-warning");
-      this._panelLayout.remove_style_class_name("gtime-panel-critical");
-      this._panelLayout.remove_style_class_name("gtime-panel-critical-blink");
+      this.remove_style_class_name("gtime-panel-warning");
+      this.remove_style_class_name("gtime-panel-critical");
+      this.remove_style_class_name("gtime-panel-critical-blink");
     }
 
     _updatePanelAlertState() {
@@ -496,17 +517,17 @@ const Indicator = GObject.registerClass(
       if (this._remainingSeconds <= 0) return;
 
       if (this._remainingSeconds <= CRITICAL_SECONDS_THRESHOLD) {
-        this._panelLayout.add_style_class_name("gtime-panel-critical");
+        this.add_style_class_name("gtime-panel-critical");
 
         // Blink only while countdown is actively ticking.
         if (this._timerId && this._remainingSeconds % 2 === 0)
-          this._panelLayout.add_style_class_name("gtime-panel-critical-blink");
+          this.add_style_class_name("gtime-panel-critical-blink");
 
         return;
       }
 
       if (this._remainingSeconds <= WARNING_SECONDS_THRESHOLD)
-        this._panelLayout.add_style_class_name("gtime-panel-warning");
+        this.add_style_class_name("gtime-panel-warning");
     }
 
     _stopTimerSource() {

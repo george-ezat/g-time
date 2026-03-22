@@ -2,36 +2,40 @@
   padding: 0;
 }
 
-.gtime-panel-layout {
-  spacing: 6px;
-  padding: 0 6px;
+.panel-button.gtime-panel-button {
+  padding: 0 8px;
   border-radius: 999px;
   transition-duration: 180ms;
+}
+
+.gtime-panel-layout {
+  spacing: 6px;
+  padding: 0;
 }
 
 .gtime-panel-label {
   font-weight: 700;
 }
 
-.gtime-panel-layout.gtime-panel-warning {
+.panel-button.gtime-panel-button.gtime-panel-warning {
   background-color: rgba(246, 211, 45, 0.18);
 }
 
-.gtime-panel-layout.gtime-panel-warning .system-status-icon,
-.gtime-panel-layout.gtime-panel-warning .gtime-panel-label {
+.panel-button.gtime-panel-button.gtime-panel-warning .system-status-icon,
+.panel-button.gtime-panel-button.gtime-panel-warning .gtime-panel-label {
   color: #f6d32d;
 }
 
-.gtime-panel-layout.gtime-panel-critical {
+.panel-button.gtime-panel-button.gtime-panel-critical {
   background-color: rgba(224, 27, 36, 0.22);
 }
 
-.gtime-panel-layout.gtime-panel-critical .system-status-icon,
-.gtime-panel-layout.gtime-panel-critical .gtime-panel-label {
+.panel-button.gtime-panel-button.gtime-panel-critical .system-status-icon,
+.panel-button.gtime-panel-button.gtime-panel-critical .gtime-panel-label {
   color: #ff7878;
 }
 
-.gtime-panel-layout.gtime-panel-critical-blink {
+.panel-button.gtime-panel-button.gtime-panel-critical-blink {
   opacity: 0.55;
 }
 
@@ -105,7 +109,8 @@
 }
 
 .gtime-time-column-active {
-  border: 2px solid #3584e4;
+  border-color: #3584e4;
+  box-shadow: inset 0 0 0 1px rgba(53, 132, 228, 0.9);
 }
 
 .gtime-step-button {
@@ -152,6 +157,17 @@
   border: none;
 }
 
+.gtime-value-entry:insensitive {
+  font-size: 46px;
+  font-weight: 300;
+  color: #f2f4f8;
+  padding: 8px 4px;
+  text-align: center;
+  background-color: transparent;
+  border: none;
+  opacity: 1;
+}
+
 .gtime-actions-row {
   margin-top: 14px;
   spacing: 12px;
@@ -180,6 +196,19 @@
 .gtime-start-button-paused:hover,
 .gtime-start-button-paused:focus {
   background-color: #c01c28;
+}
+
+.gtime-start-button-disabled,
+.gtime-start-button:insensitive {
+  background-color: #4a4f58;
+  color: #aab1bc;
+}
+
+.gtime-start-button-disabled:hover,
+.gtime-start-button-disabled:focus,
+.gtime-start-button:insensitive:hover,
+.gtime-start-button:insensitive:focus {
+  background-color: #4a4f58;
 }
 
 .gtime-reset-button {

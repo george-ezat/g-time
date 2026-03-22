@@ -26,7 +26,9 @@ A clean, quick-access timer and countdown extension for GNOME Shell (`46+`). `g-
 
 <div align=center>
 
-![Screenshot of the g-time panel menu](./assets/extension_screenshot.png)
+<img src="./assets/extension_initial.png" alt="g-time initial state" width="32%" />
+<img src="./assets/extension_ready.png" alt="g-time timer configured" width="32%" />
+<img src="./assets/extension_running.png" alt="g-time running countdown" width="32%" />
 </div>
 
 
