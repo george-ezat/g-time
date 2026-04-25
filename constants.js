@@ -1,4 +1,4 @@
-/* extension.js
+/* constants.js
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,21 +16,9 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-import { Extension } from "resource:///org/gnome/shell/extensions/extension.js";
-import * as Main from "resource:///org/gnome/shell/ui/main.js";
-
-import { Indicator } from "./indicator.js";
-
-export default class TimeExtension extends Extension {
-  enable() {
-    this._indicator = new Indicator();
-    Main.panel.addToStatusArea(this.uuid, this._indicator);
-  }
-
-  disable() {
-    if (this._indicator) {
-      this._indicator.destroy();
-      this._indicator = null;
-    }
-  }
-}
+export const MAX_HOURS = 99;
+export const MAX_MINUTES_OR_SECONDS = 59;
+export const TIME_PARTS = ["hours", "minutes", "seconds"];
+export const WARNING_SECONDS_THRESHOLD = 60;
+export const CRITICAL_SECONDS_THRESHOLD = 10;
+export const STORAGE_FILENAME = "g-time.json";

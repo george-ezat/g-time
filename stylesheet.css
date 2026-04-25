@@ -1,5 +1,6 @@
-.gtime-root-item {
-  padding: 0;
+/* Menu container */
+.gtime-menu {
+  max-height: 620px;
 }
 
 .panel-button.gtime-panel-button {
@@ -9,7 +10,7 @@
 }
 
 .gtime-panel-layout {
-  spacing: 6px;
+  spacing: 12px;
   padding: 0;
 }
 
@@ -39,50 +40,103 @@
   opacity: 0.55;
 }
 
+/* --- Root Container --- */
 .gtime-container {
-  min-width: 320px;
-  padding: 14px;
-  spacing: 8px;
-  border-radius: 14px;
-  background-color: #1f2228;
-  color: #e6e8ec;
+  width: 380px;
+  height: 420px;
+  padding: 8px 12px;
+  spacing: 0px;
 }
 
-.gtime-section-title {
-  font-size: 16px;
+.gtime-header-row {
+  spacing: 12px;
+  margin-bottom: 12px;
+}
+
+.gtime-section-header {
+  spacing: 2px;
+  margin: 0 2px;
+}
+
+.gtime-section-title-start {
+  font-size: 15px;
   font-weight: 700;
-  color: #e8ebf0;
+}
+
+.gtime-section-subtitle {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* --- Mode Tabs --- */
+.gtime-tab-bar {
+  spacing: 4px;
+}
+
+.gtime-icon-tab {
+  padding: 8px;
+  border-radius: 999px; /* full circle */
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  transition-duration: 200ms;
+}
+
+.gtime-icon-tab:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.gtime-icon-tab-active {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.gtime-icon-tab-active:hover {
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+/* --- Typography --- */
+.gtime-section-title {
+  font-size: 15px;
+  font-weight: 700;
   text-align: center;
+  margin-bottom: 10px;
 }
 
 .gtime-section-title-spaced {
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .gtime-quick-grid {
-  spacing: 6px;
+  spacing: 12px;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
 .gtime-quick-row {
   spacing: 12px;
 }
 
+/* --- Quick Buttons --- */
 .gtime-quick-button {
-  background-color: #2c3138;
-  color: #cfd5de;
-  border: 1px solid #3a4048;
   border-radius: 10px;
-  padding: 9px 6px;
-  font-size: 12px;
+  padding: 10px 14px;
   font-weight: 600;
+  border-width: 1px;
 
-  min-width: 64px;
+  border-color: rgba(255, 255, 255, 0.14);
+  background-color: transparent;
+  color: white;
+  font-size: 15px;
+  width: 40px;
   text-align: center;
+  transition-duration: 130ms;
 }
 
 .gtime-quick-button:hover,
 .gtime-quick-button:focus {
-  background-color: #383f48;
+  background-color: rgba(255, 255, 255, 0.12);
 }
 
 .gtime-quick-button:insensitive {
@@ -91,52 +145,52 @@
 
 .gtime-picker-row {
   spacing: 8px;
-  margin-top: 4px;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 .gtime-colon {
-  font-size: 38px;
-  font-weight: 300;
-  color: #9aa4b3;
-  margin-top: 0;
+  font-size: 32px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0px;
 }
 
+/* --- Time Columns --- */
 .gtime-time-column {
-  min-width: 90px;
+  width: 80px;
   border-radius: 12px;
-  border: 1px solid #404650;
-  background-color: #2a2f37;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .gtime-time-column-active {
-  border-color: #3584e4;
-  box-shadow: inset 0 0 0 1px rgba(53, 132, 228, 0.9);
+  border-color: rgba(121, 184, 255, 0.85);
+  box-shadow: inset 0 0 0 1px rgba(121, 184, 255, 0.85);
 }
 
 .gtime-step-button {
   border-radius: 0;
   background-color: transparent;
-  color: #dce1e8;
-  font-size: 18px;
+  color: white;
+  font-size: 20px;
   font-weight: 700;
-  padding: 6px;
+  padding: 4px;
+  text-align: center;
+  transition-duration: 130ms;
 }
 
 .gtime-step-button-top {
-  border-width: 0 0 1px 0;
-  border-style: solid;
-  border-color: #444b55;
+  border-radius: 4px 4px 0 0;
 }
 
 .gtime-step-button-bottom {
-  border-width: 1px 0 0 0;
-  border-style: solid;
-  border-color: #444b55;
+  border-radius: 0 0 4px 4px;
 }
 
 .gtime-step-button:hover,
 .gtime-step-button:focus {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.12);
 }
 
 .gtime-step-button:insensitive {
@@ -144,10 +198,10 @@
 }
 
 .gtime-value-entry {
-  font-size: 46px;
+  font-size: 40px;
   font-weight: 300;
-  color: #f2f4f8;
-  padding: 8px 4px;
+  color: white;
+  padding: 4px 4px 6px 4px;
   text-align: center;
   background-color: transparent;
   border: none;
@@ -158,10 +212,10 @@
 }
 
 .gtime-value-entry:insensitive {
-  font-size: 46px;
+  font-size: 40px;
   font-weight: 300;
-  color: #f2f4f8;
-  padding: 8px 4px;
+  color: white;
+  padding: 4px 4px 6px 4px;
   text-align: center;
   background-color: transparent;
   border: none;
@@ -173,52 +227,371 @@
   spacing: 12px;
 }
 
+/* --- Action Buttons --- */
 .gtime-start-button {
   padding: 10px 24px;
-  border-width: 0;
+  border-width: 1px;
+  border-color: rgba(53, 132, 228, 0.6);
   border-radius: 999px;
-  background-color: #3584e4;
-  color: #ffffff;
+  background-color: rgba(53, 132, 228, 0.8);
+  color: white;
   font-size: 14px;
   font-weight: 700;
   text-align: center;
+  transition-duration: 130ms;
 }
 
 .gtime-start-button:hover,
 .gtime-start-button:focus {
-  background-color: #4a90d9;
+  background-color: rgba(53, 132, 228, 1);
+  border-color: rgba(53, 132, 228, 0.8);
 }
 
 .gtime-start-button-paused {
-  background-color: #e01b24;
+  background-color: rgba(224, 27, 36, 0.8);
+  border-color: rgba(224, 27, 36, 0.6);
 }
 
 .gtime-start-button-paused:hover,
 .gtime-start-button-paused:focus {
-  background-color: #c01c28;
+  background-color: rgba(224, 27, 36, 1);
+  border-color: rgba(224, 27, 36, 0.8);
 }
 
 .gtime-start-button-disabled,
 .gtime-start-button:insensitive {
-  background-color: #4a4f58;
-  color: #aab1bc;
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: transparent;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .gtime-start-button-disabled:hover,
 .gtime-start-button-disabled:focus,
 .gtime-start-button:insensitive:hover,
 .gtime-start-button:insensitive:focus {
-  background-color: #4a4f58;
+  background-color: rgba(255, 255, 255, 0.12);
 }
 
 .gtime-reset-button {
   padding: 10px;
+  border-width: 1px;
+
+  border-color: rgba(255, 255, 255, 0.14);
+  background-color: transparent;
   border-radius: 999px;
-  background-color: #2c3138;
-  color: #cfd5de;
+  color: white;
+  transition-duration: 130ms;
+}
+
+.gtime-cancel-button {
+  padding: 10px 24px;
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.14);
+  background-color: transparent;
+  border-radius: 999px;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  transition-duration: 200ms;
+}
+
+.gtime-cancel-button:hover,
+.gtime-cancel-button:focus {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .gtime-reset-button:hover,
 .gtime-reset-button:focus {
-  background-color: #383f48;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.gtime-reset-button-disabled,
+.gtime-reset-button:insensitive {
+  background-color: transparent;
+  /* border-color: transparent; */
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.gtime-reset-button-disabled:hover,
+.gtime-reset-button-disabled:focus,
+.gtime-reset-button:insensitive:hover,
+.gtime-reset-button:insensitive:focus {
+  background-color: transparent;
+  /* border-color: transparent; */
+}
+
+/* --- Stop Watch & Reminder --- */
+.gtime-stopwatch-display {
+  font-size: 52px;
+  font-weight: 450;
+  color: white;
+  text-align: center;
+  margin: 0px 0 16px 0;
+  font-feature-settings: "tnum";
+}
+
+/* --- Reminder Entries & Typography --- */
+.gtime-reminder-entry {
+  margin-top: 12px;
+  margin-bottom: 12px; /* Greatly reduced space between title and date */
+  padding: 10px 14px; /* Larger padding for better breathing room */
+  border-radius: 12px; /* Modern GNOME standard */
+  background-color: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: white;
+  font-size: 14px;
+  transition-duration: 150ms;
+}
+
+.gtime-reminder-entry:focus {
+  border-color: #3584e4; /* Standard GNOME Blue */
+  background-color: rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 0 1px #3584e4;
+}
+
+.gtime-reminder-active-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #78a9ff;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* --- Reminder List & Cards --- */
+.gtime-reminder-list-container {
+  padding: 4px;
+}
+
+.gtime-reminder-card {
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.08
+  ); /* Lighter background for depth */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  transition-duration: 200ms;
+}
+
+/* Add an interactive hover state so the cards feel alive */
+.gtime-reminder-card:hover {
+  background-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.gtime-reminder-card-triggered {
+  background-color: rgba(224, 27, 36, 0.15); /* GNOME Destructive Red */
+  border: 1px solid rgba(224, 27, 36, 0.4);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  transition-duration: 200ms;
+}
+
+.gtime-reminder-card-triggered:hover {
+  background-color: rgba(224, 27, 36, 0.22);
+}
+
+.gtime-reminder-empty {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.vfade {
+  /* Scrollview class */
+}
+
+.gtime-ampm-button {
+  width: 70px;
+  border-radius: 12px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px;
+  text-align: center;
+  transition-duration: 150ms;
+}
+
+.gtime-ampm-button:hover,
+.gtime-ampm-button:focus {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(121, 184, 255, 0.85); /* Standard blue */
+}
+
+.gtime-date-entry {
+  margin-top: 0;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background-color: transparent;
+  border: none;
+  color: white;
+  text-align: center;
+  transition-duration: 150ms;
+}
+
+.gtime-date-entry:focus {
+  border-color: #3584e4;
+  background-color: rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 0 1px #3584e4;
+}
+
+.gtime-quick-jump-button {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+  text-align: center;
+  transition-duration: 130ms;
+}
+
+.gtime-quick-jump-button:hover,
+.gtime-quick-jump-button:focus {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.gtime-date-nav-button {
+  padding: 6px;
+  border-radius: 8px;
+  border: none;
+  background-color: transparent;
+  color: white;
+  text-align: center;
+  transition-duration: 130ms;
+}
+
+.gtime-date-nav-button:hover,
+.gtime-date-nav-button:focus {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.gtime-value-entry-date {
+  font-size: 17px;
+  font-weight: 500;
+  color: white;
+  padding: 6px 4px;
+  text-align: center;
+  background-color: transparent;
+  border: none;
+}
+
+.gtime-value-entry-small {
+  font-size: 32px;
+  font-weight: 300;
+  color: white;
+  padding: 4px;
+  text-align: center;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  transition-duration: 150ms;
+}
+
+.gtime-value-entry-small:focus {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+.gtime-rem-action-btn {
+  padding: 6px;
+  border-radius: 10px;
+  background-color: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  transition-duration: 200ms;
+}
+
+.gtime-rem-action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.gtime-rem-delete-action:hover,
+.gtime-rem-delete-action:focus {
+  background-color: rgba(255, 85, 85, 0.15) !important;
+  color: #ff5555 !important;
+}
+
+.gtime-ampm-button-rem {
+  padding: 8px 0px;
+  font-size: 15px; /* Size to match quick buttons */
+  font-weight: 600;
+  width: 52px;
+  text-align: center;
+  border-radius: 12px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.08); /* Match time columns */
+}
+
+.gtime-ampm-button-rem:hover,
+.gtime-ampm-button-rem:focus {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.gtime-value-entry-date {
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  padding: 6px 4px;
+  text-align: center;
+  background-color: transparent;
+  border: none;
+}
+
+.gtime-colon-reminder {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+.gtime-reminder-time-column {
+  spacing: 0;
+}
+
+.gtime-reminder-step-button {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  min-height: 36px;
+}
+
+.gtime-reminder-value-entry,
+.gtime-reminder-date-entry {
+  padding-top: 0;
+  padding-bottom: 0;
+  min-height: 60px;
+}
+.gtime-date-row {
+  spacing: 4px;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 12px;
+}
+.gtime-reminder-icon {
+  color: rgba(255, 255, 255, 0.5);
+}
+.gtime-reminder-icon-triggered {
+  color: #ff7878;
+}
+.gtime-reminder-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+.gtime-reminder-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  font-weight: 500;
 }

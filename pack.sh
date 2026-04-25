@@ -8,6 +8,6 @@ OUTPUT_FILE="${SCRIPT_DIR}/g-time.zip"
 cd "${SCRIPT_DIR}"
 rm -f "${OUTPUT_FILE}"
 
-zip -r "${OUTPUT_FILE}" extension.js metadata.json stylesheet.css LICENSE
+zip -r "${OUTPUT_FILE}" *.js metadata.json stylesheet.css LICENSE
 
 echo "Extension packaged successfully: ${OUTPUT_FILE}"

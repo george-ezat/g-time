@@ -1,8 +1,9 @@
-<div align=center>
+<div align="center">
 
 # g-time ⏱️
 
-> "I didn't find the timer I need, so I created mine."
+> *A Professional Time Management Suite for GNOME Shell*
+
 <!-- follow me on linkedin -->
 <a href="https://www.linkedin.com/comm/mynetwork/discovery-see-all?usecase=PEOPLE_FOLLOWS&followMember=george-ezat" target="_blank">
     <img alt="Connect with me on LinkedIn" title="Follow me on LinkedIn" src="https://custom-icon-badges.demolab.com/badge/LinkedIn-Follow-blue?color=1f7daf&labelColor=0e76a8&style=flat&logo=linkedin-s&label=&logoColor=white"/>
@@ -22,38 +23,57 @@
 
 ---
 
-A clean, quick-access timer and countdown extension for GNOME Shell (`46+`). `g-time` integrates directly into your top panel, offering both quick-start presets and a precise custom timer picker.
+## Overview
 
-<div align=center>
+**g-time** is a modern, modular, and user-friendly time management extension for GNOME Shell (v46+). It seamlessly integrates into your top panel, providing instant access to a powerful Timer, a precision Stopwatch, and a persistent Reminder system—all within a unified, elegant interface.
 
-<img src="./assets/extension_initial.png" alt="g-time initial state" width="32%" />
-<img src="./assets/extension_ready.png" alt="g-time timer configured" width="32%" />
-<img src="./assets/extension_running.png" alt="g-time running countdown" width="32%" />
+<div align="center">
+    <img src="./assets/01.png" alt="g-time timer tab" width="32%" />
+    <img src="./assets/02.png" alt="g-time timer configured" width="32%" />
+    <img src="./assets/03.png" alt="g-time running countdown" width="32%" />
+    <img src="./assets/04.png" alt="g-time stopwatch tab" width="32%" />
+    <img src="./assets/05.png" alt="g-time reminder tab" width="32%" />
+    <img src="./assets/06.png" alt="g-time running reminder" width="32%" />
 </div>
 
+---
 
 ## Features
-* **Quick Start:** 1m to 1h presets for immediate countdowns.
-* **Custom Timer:** Clickable and keyboard-friendly picker UI to set exact hours, minutes, and seconds.
-* **Smart Input Normalization:** Overflow is auto-carried between units (for example, entering `65` in minutes becomes `01:05`).
-* **Panel Integration:** Shows remaining time directly in the GNOME panel when active.
-* **Focused Countdown Display:** While the timer is running, only the countdown text is shown in the top bar.
-* **End-of-Timer Visual Alerts:** The panel indicator changes style as time approaches zero (warning and critical states).
-* **Native Notifications:** Triggers the default GNOME alert when the time is up.
+
+- **Timer**
+    - Additive quick start with presets (e.g., `+5m`, `+10m`, `+1h`).
+    - Precision custom picker for hours, minutes, and seconds.
+    - Smart input normalization (overflow auto-carried between units).
+- **Stopwatch**
+    - Dedicated tab for elapsed time tracking with pause, resume, and reset.
+    - Continues running in the background when the menu is closed.
+- **Reminders**
+    - Set alerts for specific dates and times (AM/PM supported).
+    - Native GNOME notifications and system sound alerts.
+- **Dynamic Panel Integration**
+    - Top bar dynamically displays active tools and aggregated counts.
+    - Visual alerts: warning (yellow at 60s), critical (red at 10s).
+- **Persistent Storage**
+    - Reminders and timer states are saved between sessions.
+- **Accessibility**
+    - Keyboard-friendly UI and clear visual cues.
+
+---
 
 ## Installation
 
-### Method 1: Via GNOME Extension Manager (Recommended)
-1. Download the `g-time.zip` file from the [Latest Release](https://github.com/george-ezat/g-time/releases/latest) page.
+### Method 1: GNOME Extension Manager (Recommended)
+1. Download `g-time.zip` from the [Latest Release](https://github.com/george-ezat/g-time/releases/latest).
 2. Open the **Extension Manager** app (available on Flathub or your distribution's software center).
 3. Click the menu icon (three dots or hamburger) and select **Install from file...**
 4. Select the downloaded `g-time.zip` file.
 
-### Method 2: Via Command Line
-1. Download the `g-time.zip` file from the [Latest Release](https://github.com/george-ezat/g-time/releases/latest) page.
+### Method 2: Command Line
+1. Download `g-time.zip` from the [Latest Release](https://github.com/george-ezat/g-time/releases/latest).
 2. Open your terminal and run:
-   ```bash
-   gnome-extensions install /path/to/your/downloaded/g-time.zip
+    ```bash
+    gnome-extensions install /path/to/your/downloaded/g-time.zip
+    ```
 3. Log out and log back in, or restart GNOME Shell (press Alt+F2, type r, and hit Enter on X11).
 4. Enable the extension:
     ```bash
@@ -61,3 +81,38 @@ A clean, quick-access timer and countdown extension for GNOME Shell (`46+`). `g-
     ```
 
 ---
+
+## Usage
+
+Once installed and enabled, you will see the g-time icon in your GNOME top panel. Click the icon to access the Timer, Stopwatch, and Reminders tabs. Configure timers, start/stop the stopwatch, and set reminders as needed. All settings and reminders are saved automatically.
+
+### Configuration
+
+g-time is designed to work out-of-the-box. For advanced configuration, refer to the extension settings in the GNOME Extensions app or edit the configuration files directly if needed.
+
+---
+
+## Troubleshooting
+
+- Ensure you are running GNOME Shell v46 or later.
+- If the extension does not appear, try restarting GNOME Shell or logging out and back in.
+- For installation issues, verify that the UUID is `g-time@george-ezat.github.io` and that the extension is enabled.
+- Check the [GitHub Issues](https://github.com/george-ezat/g-time/issues) page for known problems or to report a new one.
+
+---
+
+## Contributing
+
+Contributions, bug reports, and feature requests are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/george-ezat/g-time).
+
+---
+
+## License
+
+This project is licensed under the GNU General Public License v2.0. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Author & Support
+
+Created and maintained by [George Ezzat](https://github.com/george-ezat). For questions, suggestions, or support, please use the [GitHub Discussions](https://github.com/george-ezat/g-time/discussions) or connect via [LinkedIn](https://www.linkedin.com/comm/mynetwork/discovery-see-all?usecase=PEOPLE_FOLLOWS&followMember=george-ezat).
