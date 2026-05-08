@@ -31,13 +31,27 @@ export class TimeStorage {
 
   async saveState(state) {
     const dataStr = JSON.stringify(state, null, 2);
-    try {
-      GLib.file_set_contents(this._filePath, dataStr);
-      return true;
-    } catch (e) {
-      console.error(`[g-time] Error saving storage: ${e}`);
-      return false;
-    }
+    const file = Gio.File.new_for_path(this._filePath);
+    const bytes = new TextEncoder().encode(dataStr);
+
+    return new Promise((resolve) => {
+      file.replace_contents_async(
+        bytes,
+        null,
+        false,
+        Gio.FileCreateFlags.REPLACE_DESTINATION,
+        null,
+        (source, result) => {
+          try {
+            source.replace_contents_finish(result);
+            resolve(true);
+          } catch (e) {
+            console.error(`[g-time] Error saving async storage: ${e}`);
+            resolve(false);
+          }
+        },
+      );
+    });
   }
 
   saveStateSync(state) {
