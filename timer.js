@@ -70,7 +70,7 @@ export class Timer {
     // Allow clicking the background to unfocus text entries
     container.reactive = true;
     container.connect("button-press-event", () => {
-      global.stage.set_key_focus(null);
+      container.grab_key_focus();
       this._setActiveColumn(null);
       return Clutter.EVENT_PROPAGATE;
     });
