@@ -658,11 +658,27 @@ export class Reminder {
         hourValLabel.set_text(this._newRemHour.toString().padStart(2, "0"));
       if (minValLabel)
         minValLabel.set_text(this._newRemMinute.toString().padStart(2, "0"));
+      let canToggleAmPm = true;
+      if (isToday) {
+        let flippedAmPm = this._newRemAmPm === "AM" ? "PM" : "AM";
+        let h24 = this._newRemHour;
+        if (flippedAmPm === "AM" && h24 === 12) h24 = 0;
+        if (flippedAmPm === "PM" && h24 !== 12) h24 += 12;
+        let currentH = parseInt(now.format("%H"), 10);
+        let currentM = parseInt(now.format("%M"), 10);
+        if (
+          h24 < currentH ||
+          (h24 === currentH && this._newRemMinute < currentM)
+        ) {
+          canToggleAmPm = false;
+        }
+      }
+
       if (ampmBtn) {
         ampmBtn.set_label(this._newRemAmPm);
-        ampmBtn.reactive = !isCurrentTime;
-        ampmBtn.can_focus = !isCurrentTime;
-        if (isCurrentTime) {
+        ampmBtn.reactive = canToggleAmPm;
+        ampmBtn.can_focus = canToggleAmPm;
+        if (!canToggleAmPm) {
           ampmBtn.add_style_class_name("gtime-step-button-disabled");
         } else {
           ampmBtn.remove_style_class_name("gtime-step-button-disabled");
