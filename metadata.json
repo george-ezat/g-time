@@ -3,7 +3,13 @@
   "version": 2,
   "description": "A quick and precise Timer, Stopwatch, and Reminder suite for GNOME Shell.",
   "uuid": "g-time@george-ezat.github.io",
+  "url": "https://github.com/george-ezat/g-time",
   "shell-version": [
-    "46"
+    "46",
+    "47",
+    "48",
+    "49",
+    "50",
+    "51"
   ]
 }
