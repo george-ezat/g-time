@@ -292,9 +292,16 @@ export const Indicator = GObject.registerClass(
         if (activeCount === 1) {
           this._panelLabel.visible = true;
           this._panelIcon.visible = false;
+
+          const h = Math.floor(this._stopwatch.seconds / 3600);
           const m = Math.floor((this._stopwatch.seconds % 3600) / 60);
           const s = this._stopwatch.seconds % 60;
-          this._panelLabel.text = `⏱ ${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+
+          if (h > 0) {
+            this._panelLabel.text = `⏱ ${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+          } else {
+            this._panelLabel.text = `⏱ ${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+          }
         }
       }
 
