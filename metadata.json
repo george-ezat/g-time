@@ -1,6 +1,6 @@
 {
   "name": "g-time",
-  "version": 2,
+  "version": 3,
   "description": "A quick and precise Timer, Stopwatch, and Reminder suite for GNOME Shell.",
   "uuid": "g-time@george-ezat.github.io",
   "url": "https://github.com/george-ezat/g-time",

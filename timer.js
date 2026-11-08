@@ -58,6 +58,11 @@ export class Timer {
       GLib.source_remove(this.timerId);
       this.timerId = null;
     }
+    // Clear auto-dismiss timeout if it exists
+    if (this._autoDismissId) {
+      GLib.source_remove(this._autoDismissId);
+      this._autoDismissId = null;
+    }
   }
 
   _buildUi() {
@@ -511,6 +516,27 @@ export class Timer {
     } catch (e) {
       console.warn("[g-time] Failed to play sound", e);
     }
+
+    // Auto-dismiss the red warning state after 15 seconds
+    if (this._autoDismissId) {
+      GLib.source_remove(this._autoDismissId);
+    }
+
+    this._autoDismissId = GLib.timeout_add_seconds(
+      GLib.PRIORITY_DEFAULT,
+      15,
+      () => {
+        this._autoDismissId = null;
+
+        // Only dismiss if it hasn't already been acknowledged by the user
+        if (this.triggered) {
+          this.triggered = false;
+          this._indicator.updatePanelFromMode();
+          this._indicator.queueSave();
+        }
+        return GLib.SOURCE_REMOVE;
+      },
+    );
   }
 
   _resetTimer() {

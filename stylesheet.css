@@ -14,17 +14,37 @@
   padding: 0;
 }
 
+.gtime-indicator-group {
+  spacing: 4px;
+}
+
 .gtime-panel-label {
   font-weight: 700;
 }
 
-.panel-button.gtime-panel-button.gtime-panel-warning {
+/* Isolated Timer/Reminder States */
+.gtime-timer-warning {
   background-color: rgba(246, 211, 45, 0.18);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.gtime-timer-warning .system-status-icon,
+.gtime-timer-warning .gtime-panel-label {
+  color: #f6d32d;
 }
 
-.panel-button.gtime-panel-button.gtime-panel-warning .system-status-icon,
-.panel-button.gtime-panel-button.gtime-panel-warning .gtime-panel-label {
-  color: #f6d32d;
+.gtime-timer-critical {
+  background-color: rgba(224, 27, 36, 0.22);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.gtime-timer-critical .system-status-icon,
+.gtime-timer-critical .gtime-panel-label {
+  color: #ff7878;
+}
+
+.gtime-timer-critical-blink {
+  opacity: 0.55;
 }
 
 .panel-button.gtime-panel-button.gtime-panel-critical {

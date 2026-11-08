@@ -52,18 +52,48 @@ export const Indicator = GObject.registerClass(
         style_class: "gtime-panel-layout",
       });
 
-      this._panelIcon = new St.Icon({
-        icon_name: "alarm-symbolic",
-        style_class: "system-status-icon",
-      });
-      this._panelLayout.add_child(this._panelIcon);
-
-      this._panelLabel = new St.Label({
-        style_class: "gtime-panel-label",
+      // 1. Timer Group
+      this._timerBox = new St.BoxLayout({
+        style_class: "gtime-indicator-group",
         y_align: Clutter.ActorAlign.CENTER,
         visible: false,
       });
-      this._panelLayout.add_child(this._panelLabel);
+      this._timerIcon = new St.Icon({
+        icon_name: "hourglass-symbolic",
+        style_class: "system-status-icon",
+      });
+      this._timerLabel = new St.Label({
+        style_class: "gtime-panel-label",
+        y_align: Clutter.ActorAlign.CENTER,
+      });
+      this._timerBox.add_child(this._timerIcon);
+      this._timerBox.add_child(this._timerLabel);
+      this._panelLayout.add_child(this._timerBox);
+
+      // 2. Stopwatch Group
+      this._stopwatchBox = new St.BoxLayout({
+        style_class: "gtime-indicator-group",
+        y_align: Clutter.ActorAlign.CENTER,
+        visible: false,
+      });
+      this._stopwatchIcon = new St.Icon({
+        icon_name: "timer-symbolic",
+        style_class: "system-status-icon",
+      });
+      this._stopwatchLabel = new St.Label({
+        style_class: "gtime-panel-label",
+        y_align: Clutter.ActorAlign.CENTER,
+      });
+      this._stopwatchBox.add_child(this._stopwatchIcon);
+      this._stopwatchBox.add_child(this._stopwatchLabel);
+      this._panelLayout.add_child(this._stopwatchBox);
+
+      // 3. Default/Reminder Icon
+      this._defaultIcon = new St.Icon({
+        icon_name: "alarm-symbolic",
+        style_class: "system-status-icon",
+      });
+      this._panelLayout.add_child(this._defaultIcon);
 
       this.add_child(this._panelLayout);
       this._buildMenuUi();
@@ -249,68 +279,69 @@ export const Indicator = GObject.registerClass(
     }
 
     _clearPanelAlertState() {
+      // Clear root classes just in case
       this.remove_style_class_name("gtime-panel-warning");
       this.remove_style_class_name("gtime-panel-critical");
-      this.remove_style_class_name("gtime-panel-critical-blink");
+
+      // Clear isolated classes
+      this._timerBox.remove_style_class_name("gtime-timer-warning");
+      this._timerBox.remove_style_class_name("gtime-timer-critical");
+      this._timerBox.remove_style_class_name("gtime-timer-critical-blink");
     }
 
     updatePanelFromMode() {
       this._clearPanelAlertState();
-      this._panelLabel.visible = false;
-      this._panelIcon.visible = true;
+
+      // Hide all elements by default
+      this._timerBox.visible = false;
+      this._stopwatchBox.visible = false;
+      this._defaultIcon.visible = false;
 
       let activeCount = 0;
 
+      // Handle Timer Display
       if (this._timer.timerId || this._timer.remainingSeconds > 0) {
         activeCount++;
-        this._panelLabel.visible = true;
-        this._panelIcon.visible = false;
+        this._timerBox.visible = true;
 
         const h = `${this._timer.time.hours}`.padStart(2, "0");
         const m = `${this._timer.time.minutes}`.padStart(2, "0");
         const s = `${this._timer.time.seconds}`.padStart(2, "0");
-        this._panelLabel.text =
+        this._timerLabel.text =
           this._timer.time.hours > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
 
         if (
           this._timer.remainingSeconds > 0 &&
           this._timer.remainingSeconds <= CRITICAL_SECONDS_THRESHOLD
         ) {
-          this.add_style_class_name("gtime-panel-critical");
+          this._timerBox.add_style_class_name("gtime-timer-critical");
           if (this._timer.timerId && this._timer.remainingSeconds % 2 === 0)
-            this.add_style_class_name("gtime-panel-critical-blink");
+            this._timerBox.add_style_class_name("gtime-timer-critical-blink");
         } else if (
           this._timer.remainingSeconds > 0 &&
           this._timer.remainingSeconds <= WARNING_SECONDS_THRESHOLD
         ) {
-          this.add_style_class_name("gtime-panel-warning");
+          this._timerBox.add_style_class_name("gtime-timer-warning");
         }
       }
 
+      // Handle Stopwatch Display
       if (this._stopwatch.timerId || this._stopwatch.seconds > 0) {
         activeCount++;
-        if (activeCount === 1) {
-          this._panelLabel.visible = true;
-          this._panelIcon.visible = false;
+        this._stopwatchBox.visible = true;
 
-          const h = Math.floor(this._stopwatch.seconds / 3600);
-          const m = Math.floor((this._stopwatch.seconds % 3600) / 60);
-          const s = this._stopwatch.seconds % 60;
+        const h = Math.floor(this._stopwatch.seconds / 3600);
+        const m = Math.floor((this._stopwatch.seconds % 3600) / 60);
+        const s = this._stopwatch.seconds % 60;
 
-          if (h > 0) {
-            this._panelLabel.text = `⏱ ${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-          } else {
-            this._panelLabel.text = `⏱ ${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-          }
+        if (h > 0) {
+          this._stopwatchLabel.text = `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+        } else {
+          this._stopwatchLabel.text = `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
         }
       }
 
-      if (activeCount > 1) {
-        this._panelLabel.text = `[${activeCount}] \u23F2`;
-        this._panelIcon.visible = false;
-        this._panelLabel.visible = true;
-      }
-
+      // Handle Default & Triggered State
       const reminderTriggered = this._reminder.reminders.some(
         (rm) => rm.triggered,
       );
@@ -318,21 +349,25 @@ export const Indicator = GObject.registerClass(
       const hasTriggered = reminderTriggered || timerTriggered;
 
       if (hasTriggered) {
-        if (!this.has_style_class_name("gtime-panel-critical")) {
+        // If timer is done, keep the timer box red until acknowledged
+        if (timerTriggered) {
+          this._timerBox.visible = true;
+          this._timerBox.add_style_class_name("gtime-timer-critical");
+        }
+
+        // If a reminder triggered, we can color the root panel yellow as a general alert
+        if (reminderTriggered) {
           this.add_style_class_name("gtime-panel-warning");
         }
-        if (activeCount === 0) {
-          this._panelLabel.text = `\u2022`;
-          this._panelLabel.visible = true;
-          this._panelIcon.icon_name =
-            reminderTriggered && !timerTriggered
-              ? "preferences-system-notifications-symbolic"
-              : "alarm-symbolic";
-        } else {
-          this._panelLabel.text = `\u2022 ` + this._panelLabel.text;
+
+        if (activeCount === 0 && !timerTriggered) {
+          this._defaultIcon.visible = true;
+          this._defaultIcon.icon_name =
+            "preferences-system-notifications-symbolic";
         }
-      } else {
-        this._panelIcon.icon_name = "alarm-symbolic";
+      } else if (activeCount === 0) {
+        this._defaultIcon.visible = true;
+        this._defaultIcon.icon_name = "alarm-symbolic";
       }
     }
 
