@@ -2,9 +2,18 @@ import GLib from "gi://GLib";
 import St from "gi://St";
 import Clutter from "gi://Clutter";
 import * as Main from "resource:///org/gnome/shell/ui/main.js";
+import * as MessageTray from "resource:///org/gnome/shell/ui/messageTray.js";
 import { gettext as _ } from "resource:///org/gnome/shell/extensions/extension.js";
+import {
+  MAX_HOURS,
+  MAX_MINUTES_OR_SECONDS,
+  TIME_PARTS,
+  WARNING_SECONDS_THRESHOLD,
+  CRITICAL_SECONDS_THRESHOLD,
+} from "./constants.js";
 
-import { MAX_HOURS, MAX_MINUTES_OR_SECONDS, TIME_PARTS } from "./constants.js";
+const CIRCLE_SIZE = 250;
+const STROKE_WIDTH = 8;
 
 export class Timer {
   constructor(indicator) {
@@ -14,13 +23,15 @@ export class Timer {
     this.remainingSeconds = 0;
     this.endTime = null;
     this.triggered = false;
+    this._lastDurationSeconds = 0;
+    this._animTimerId = null;
+    this._pausedRemainingMs = 0;
 
     this._columns = new Map();
     this._valueLabels = new Map();
     this._editableButtons = [];
     this._editableEntries = [];
     this._isSyncingEntries = false;
-    this._lastQuickButton = null;
 
     this.container = this._buildUi();
   }
@@ -29,8 +40,15 @@ export class Timer {
     const now = GLib.DateTime.new_now_local().to_unix();
     if (state.time) this.time = state.time;
     if (state.timerTriggered) this.triggered = state.timerTriggered;
+    if (state.lastDurationSeconds) {
+      this._lastDurationSeconds = state.lastDurationSeconds;
+    }
+
     if (state.endTime) {
       this.remainingSeconds = Math.max(0, state.endTime - now);
+      if (!this._lastDurationSeconds && this.remainingSeconds > 0) {
+        this._lastDurationSeconds = this.remainingSeconds;
+      }
       if (this.remainingSeconds > 0) this._toggleTimer();
       else {
         this.remainingSeconds = 0;
@@ -38,7 +56,12 @@ export class Timer {
       }
     } else if (state.remainingSeconds) {
       this.remainingSeconds = state.remainingSeconds;
+      this._pausedRemainingMs = this.remainingSeconds * 1000;
+      if (!this._lastDurationSeconds) {
+        this._lastDurationSeconds = this.remainingSeconds;
+      }
     }
+
     this._renderTime();
     this._updateStartButtonState();
   }
@@ -48,6 +71,7 @@ export class Timer {
     return {
       time: this.time,
       remainingSeconds: this.remainingSeconds,
+      lastDurationSeconds: this._lastDurationSeconds,
       endTime: this.timerId ? now + this.remainingSeconds : null,
       timerTriggered: this.triggered,
     };
@@ -58,7 +82,10 @@ export class Timer {
       GLib.source_remove(this.timerId);
       this.timerId = null;
     }
-    // Clear auto-dismiss timeout if it exists
+    if (this._animTimerId) {
+      GLib.source_remove(this._animTimerId);
+      this._animTimerId = null;
+    }
     if (this._autoDismissId) {
       GLib.source_remove(this._autoDismissId);
       this._autoDismissId = null;
@@ -72,19 +99,27 @@ export class Timer {
       y_expand: true,
     });
 
-    // Allow clicking the background to unfocus text entries
-    container.reactive = true;
-    container.connect("button-press-event", () => {
-      container.grab_key_focus();
+    // =========================================================================
+    // 1. SETUP VIEW (Quick Start + Picker Columns + Bottom Start/Reset)
+    // =========================================================================
+    this._setupView = new St.BoxLayout({
+      vertical: true,
+      x_expand: true,
+      y_expand: true,
+      reactive: true,
+    });
+
+    this._setupView.connect("button-press-event", () => {
+      this._setupView.grab_key_focus();
       this._setActiveColumn(null);
       return Clutter.EVENT_PROPAGATE;
     });
 
-    container.add_child(
+    this._setupView.add_child(
       new St.Label({
         text: _("Quick Start"),
         style_class: "gtime-section-title",
-        x_align: 0.5,
+        x_align: Clutter.ActorAlign.CENTER,
         x_expand: true,
       }),
     );
@@ -123,6 +158,7 @@ export class Timer {
           x_expand: true,
           can_focus: true,
         });
+
         button.connect("clicked", () => {
           if (this.remainingSeconds > 0) return;
           this._setActiveColumn(null);
@@ -135,6 +171,7 @@ export class Timer {
           let newS = newTotal % 60;
           this._setTime(newH, newM, newS);
         });
+
         this._registerEditableButton(button);
         row.add_child(button);
       }
@@ -142,13 +179,13 @@ export class Timer {
       quickGrid.add_child(row);
     }
 
-    container.add_child(quickGrid);
+    this._setupView.add_child(quickGrid);
 
-    container.add_child(
+    this._setupView.add_child(
       new St.Label({
         text: _("Set Timer"),
         style_class: "gtime-section-title gtime-section-title-spaced",
-        x_align: 0.5,
+        x_align: Clutter.ActorAlign.CENTER,
         x_expand: true,
       }),
     );
@@ -156,6 +193,7 @@ export class Timer {
     const pickerRow = new St.BoxLayout({
       style_class: "gtime-picker-row",
       x_expand: true,
+      x_align: Clutter.ActorAlign.CENTER,
     });
 
     pickerRow.add_child(this._buildColumn("hours"));
@@ -163,20 +201,23 @@ export class Timer {
     pickerRow.add_child(this._buildColumn("minutes"));
     pickerRow.add_child(this._buildColon());
     pickerRow.add_child(this._buildColumn("seconds"));
+    this._setupView.add_child(pickerRow);
 
-    container.add_child(pickerRow);
+    this._setupView.add_child(new St.Widget({ y_expand: true }));
 
-    container.add_child(new St.Widget({ y_expand: true }));
-
-    const actionsRow = new St.BoxLayout({
+    const setupActionsRow = new St.BoxLayout({
       style_class: "gtime-actions-row",
-      x_align: 2,
+      x_align: Clutter.ActorAlign.CENTER,
     });
 
+    this._startIcon = new St.Icon({
+      icon_name: "media-playback-start-symbolic",
+      icon_size: 18,
+    });
     this._startButton = new St.Button({
-      label: _("Start"),
-      style_class: "gtime-start-button",
+      style_class: "gtime-play-button",
       can_focus: true,
+      child: this._startIcon,
     });
     this._startButton.connect("clicked", this._toggleTimer.bind(this));
 
@@ -184,16 +225,165 @@ export class Timer {
       style_class: "gtime-reset-button",
       can_focus: true,
       reactive: false,
-      child: new St.Icon({ icon_name: "view-refresh-symbolic", icon_size: 16 }),
+      child: new St.Icon({ icon_name: "view-refresh-symbolic", icon_size: 18 }),
     });
     this._resetButton.add_style_class_name("gtime-reset-button-disabled");
     this._resetButton.connect("clicked", this._resetTimer.bind(this));
 
-    actionsRow.add_child(this._startButton);
-    actionsRow.add_child(this._resetButton);
-    container.add_child(actionsRow);
+    setupActionsRow.add_child(this._startButton);
+    setupActionsRow.add_child(this._resetButton);
+    this._setupView.add_child(setupActionsRow);
+
+    // =========================================================================
+    // 2. ACTIVE RUNNING/PAUSED VIEW (Circular Dial with Time & Controls Inside)
+    // =========================================================================
+    this._runningView = new St.BoxLayout({
+      vertical: true,
+      x_expand: true,
+      y_expand: true,
+      x_align: Clutter.ActorAlign.CENTER,
+      y_align: Clutter.ActorAlign.CENTER,
+      style_class: "gtime-circle-wrapper",
+      visible: false,
+    });
+
+    const dialOverlay = new St.Widget({
+      layout_manager: new Clutter.BinLayout(),
+      width: CIRCLE_SIZE,
+      height: CIRCLE_SIZE,
+      x_align: Clutter.ActorAlign.CENTER,
+      y_align: Clutter.ActorAlign.CENTER,
+    });
+
+    this._circleCanvas = new St.DrawingArea({
+      width: CIRCLE_SIZE,
+      height: CIRCLE_SIZE,
+      x_align: Clutter.ActorAlign.FILL,
+      y_align: Clutter.ActorAlign.FILL,
+    });
+    this._circleCanvas.connect("repaint", (area) => this._drawCircle(area));
+
+    const innerContent = new St.BoxLayout({
+      vertical: true,
+      style_class: "gtime-circle-inner",
+      x_expand: true,
+      y_expand: true,
+      x_align: Clutter.ActorAlign.CENTER,
+      y_align: Clutter.ActorAlign.CENTER,
+    });
+
+    this._circleTimeLabel = new St.Label({
+      text: "00:00",
+      style_class: "gtime-circle-time-label",
+      x_align: Clutter.ActorAlign.CENTER,
+    });
+
+    this._circleSubtitleLabel = new St.Label({
+      text: "",
+      style_class: "gtime-circle-subtitle",
+      x_align: Clutter.ActorAlign.CENTER,
+    });
+
+    const circleActionsRow = new St.BoxLayout({
+      style_class: "gtime-circle-actions-row",
+      x_align: Clutter.ActorAlign.CENTER,
+      y_align: Clutter.ActorAlign.CENTER,
+    });
+
+    this._circlePauseIcon = new St.Icon({
+      icon_name: "media-playback-pause-symbolic",
+      icon_size: 18,
+    });
+    this._circlePauseButton = new St.Button({
+      style_class: "gtime-play-button gtime-play-button-paused",
+      can_focus: true,
+      y_align: Clutter.ActorAlign.CENTER,
+      child: this._circlePauseIcon,
+    });
+    this._circlePauseButton.connect("clicked", this._toggleTimer.bind(this));
+
+    this._circleResetButton = new St.Button({
+      style_class: "gtime-reset-button",
+      can_focus: true,
+      y_align: Clutter.ActorAlign.CENTER,
+      child: new St.Icon({ icon_name: "view-refresh-symbolic", icon_size: 18 }),
+    });
+    this._circleResetButton.connect("clicked", this._resetTimer.bind(this));
+
+    circleActionsRow.add_child(this._circlePauseButton);
+    circleActionsRow.add_child(this._circleResetButton);
+
+    innerContent.add_child(this._circleTimeLabel);
+    innerContent.add_child(this._circleSubtitleLabel);
+    innerContent.add_child(circleActionsRow);
+
+    dialOverlay.add_child(this._circleCanvas);
+    dialOverlay.add_child(innerContent);
+    this._runningView.add_child(dialOverlay);
+
+    container.add_child(this._setupView);
+    container.add_child(this._runningView);
 
     return container;
+  }
+
+  _drawCircle(area) {
+    const cr = area.get_context();
+    const [width, height] = area.get_surface_size();
+    const cx = width / 2;
+    const cy = height / 2;
+    const radius = Math.min(cx, cy) - STROKE_WIDTH - 4;
+
+    cr.setOperator(2);
+
+    // 1. Subtle inner glass fill
+    cr.arc(cx, cy, radius - STROKE_WIDTH / 2, 0, 2 * Math.PI);
+    cr.setSourceRGBA(1, 1, 1, 0.03);
+    cr.fill();
+
+    // 2. Background circular track
+    cr.setLineWidth(STROKE_WIDTH);
+    cr.arc(cx, cy, radius, 0, 2 * Math.PI);
+    cr.setSourceRGBA(1, 1, 1, 0.1);
+    cr.stroke();
+
+    // 3. Smooth sub-second depleting progress arc
+    const totalMs =
+      Math.max(1, this._lastDurationSeconds || this.remainingSeconds) * 1000;
+    let remainingMs = this._pausedRemainingMs || this.remainingSeconds * 1000;
+    if (this.timerId && this._endTimeMs) {
+      const nowMs = GLib.get_real_time() / 1000;
+      remainingMs = Math.max(0, this._endTimeMs - nowMs);
+    }
+    const ratio = Math.max(0, Math.min(1, remainingMs / totalMs));
+
+    if (ratio > 0) {
+      const startAngle = -Math.PI / 2;
+      const endAngle = startAngle + ratio * 2 * Math.PI;
+
+      const alpha = this.timerId ? 1.0 : 0.55;
+      if (this.remainingSeconds <= CRITICAL_SECONDS_THRESHOLD) {
+        cr.setSourceRGBA(1.0, 0.47, 0.47, alpha); // #ff7878
+      } else if (this.remainingSeconds <= WARNING_SECONDS_THRESHOLD) {
+        cr.setSourceRGBA(0.965, 0.827, 0.176, alpha); // #f6d32d
+      } else {
+        cr.setSourceRGBA(0.208, 0.518, 0.894, alpha); // #3584e4
+      }
+      cr.setLineCap(1);
+      cr.setLineWidth(STROKE_WIDTH);
+      cr.arc(cx, cy, radius, startAngle, endAngle);
+      cr.stroke();
+    }
+
+    cr.$dispose();
+  }
+
+  _formatDurationText(totalSeconds) {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    const pad = (n) => `${n}`.padStart(2, "0");
+    return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
   }
 
   _buildColon() {
@@ -208,8 +398,24 @@ export class Timer {
     const column = new St.BoxLayout({
       vertical: true,
       style_class: "gtime-time-column",
-      x_expand: true,
-      y_align: 0.5,
+      x_expand: false,
+      y_align: Clutter.ActorAlign.CENTER,
+      reactive: true,
+    });
+
+    column.connect("scroll-event", (_actor, event) => {
+      if (this.remainingSeconds > 0) return Clutter.EVENT_PROPAGATE;
+      const direction = event.get_scroll_direction();
+      if (direction === Clutter.ScrollDirection.UP) {
+        this._setActiveColumn(type);
+        this._adjust(type, 1);
+        return Clutter.EVENT_STOP;
+      } else if (direction === Clutter.ScrollDirection.DOWN) {
+        this._setActiveColumn(type);
+        this._adjust(type, -1);
+        return Clutter.EVENT_STOP;
+      }
+      return Clutter.EVENT_PROPAGATE;
     });
 
     const plusButton = new St.Button({
@@ -231,7 +437,6 @@ export class Timer {
       y_expand: true,
       y_align: Clutter.ActorAlign.CENTER,
     });
-    valueEntry.clutter_text.set_max_length(2);
     valueEntry.clutter_text.set_x_align(Clutter.ActorAlign.CENTER);
     valueEntry.clutter_text.set_y_align(Clutter.ActorAlign.CENTER);
     valueEntry.connect("key-focus-in", () => {
@@ -271,7 +476,6 @@ export class Timer {
 
     this._columns.set(type, column);
     this._valueLabels.set(type, valueEntry);
-
     return column;
   }
 
@@ -285,8 +489,6 @@ export class Timer {
 
   _adjust(type, delta) {
     if (this.remainingSeconds > 0) return;
-
-    this._lastQuickButton = null;
 
     const max = type === "hours" ? MAX_HOURS : MAX_MINUTES_OR_SECONDS;
     let nextValue = this.time[type] + delta;
@@ -312,6 +514,7 @@ export class Timer {
     this.time.hours = Math.max(0, Math.min(MAX_HOURS, hours));
     this.time.minutes = Math.max(0, Math.min(MAX_MINUTES_OR_SECONDS, minutes));
     this.time.seconds = Math.max(0, Math.min(MAX_MINUTES_OR_SECONDS, seconds));
+
     if (this.triggered) {
       this.triggered = false;
       this._indicator.updatePanelFromMode();
@@ -321,18 +524,50 @@ export class Timer {
   }
 
   _renderTime() {
+    const hStr = `${this.time.hours}`.padStart(2, "0");
+    const mStr = `${this.time.minutes}`.padStart(2, "0");
+    const sStr = `${this.time.seconds}`.padStart(2, "0");
+
     this._isSyncingEntries = true;
-    this._valueLabels
-      .get("hours")
-      .set_text(`${this.time.hours}`.padStart(2, "0"));
-    this._valueLabels
-      .get("minutes")
-      .set_text(`${this.time.minutes}`.padStart(2, "0"));
-    this._valueLabels
-      .get("seconds")
-      .set_text(`${this.time.seconds}`.padStart(2, "0"));
+    this._valueLabels.get("hours").set_text(hStr);
+    this._valueLabels.get("minutes").set_text(mStr);
+    this._valueLabels.get("seconds").set_text(sStr);
     this._isSyncingEntries = false;
+
+    if (this._circleTimeLabel) {
+      if (this.time.hours > 0) {
+        this._circleTimeLabel.set_text(`${hStr}:${mStr}:${sStr}`);
+        this._circleTimeLabel.add_style_class_name(
+          "gtime-circle-time-label-hours",
+        );
+      } else {
+        this._circleTimeLabel.set_text(`${mStr}:${sStr}`);
+        this._circleTimeLabel.remove_style_class_name(
+          "gtime-circle-time-label-hours",
+        );
+      }
+    }
+
+    if (this._circleSubtitleLabel) {
+      const total = this._lastDurationSeconds || this.remainingSeconds;
+      this._circleSubtitleLabel.set_text(
+        total > 0 ? `${_("Total")} ${this._formatDurationText(total)}` : "",
+      );
+    }
+
     this._updateStartButtonState();
+    this._updateActiveView();
+  }
+
+  _updateActiveView() {
+    const isActive = this.timerId !== null || this.remainingSeconds > 0;
+    if (this._setupView && this._runningView) {
+      this._setupView.visible = !isActive;
+      this._runningView.visible = isActive;
+    }
+    if (isActive && this._circleCanvas) {
+      this._circleCanvas.queue_repaint();
+    }
   }
 
   _hasConfiguredTime() {
@@ -350,13 +585,12 @@ export class Timer {
     this._startButton.can_focus = Boolean(canStart);
 
     if (canStart)
-      this._startButton.remove_style_class_name("gtime-start-button-disabled");
-    else this._startButton.add_style_class_name("gtime-start-button-disabled");
+      this._startButton.remove_style_class_name("gtime-play-button-disabled");
+    else this._startButton.add_style_class_name("gtime-play-button-disabled");
 
     if (this._resetButton) {
       this._resetButton.reactive = Boolean(canReset);
       this._resetButton.can_focus = Boolean(canReset);
-
       if (canReset) {
         this._resetButton.remove_style_class_name(
           "gtime-reset-button-disabled",
@@ -370,22 +604,25 @@ export class Timer {
   _onValueEntryChanged(type, entry) {
     if (this.remainingSeconds > 0 || this._isSyncingEntries) return;
 
-    this._lastQuickButton = null;
-
     const rawValue = entry.get_text();
-    const digitsOnly = rawValue.replace(/\D/g, "").slice(0, 2);
+    const maxVal = type === "hours" ? MAX_HOURS : MAX_MINUTES_OR_SECONDS;
+    let digitsOnly = rawValue.replace(/\D/g, "").slice(-2);
+
+    if (digitsOnly.length > 0) {
+      const parsed = Number.parseInt(digitsOnly, 10);
+      if (parsed > maxVal) {
+        digitsOnly = `${maxVal}`;
+      }
+    }
 
     if (digitsOnly !== rawValue) {
+      this._isSyncingEntries = true;
       entry.set_text(digitsOnly);
-      return;
+      this._isSyncingEntries = false;
     }
 
     this.time[type] =
-      digitsOnly.length === 0
-        ? 0
-        : Math.min(MAX_HOURS, Number.parseInt(digitsOnly, 10));
-
-    this._normalizeTime();
+      digitsOnly.length === 0 ? 0 : Number.parseInt(digitsOnly, 10);
     if (this.triggered) {
       this.triggered = false;
       this._indicator.updatePanelFromMode();
@@ -394,25 +631,10 @@ export class Timer {
     this._indicator.queueSave();
   }
 
-  _normalizeTime() {
-    const maxTotalSeconds =
-      MAX_HOURS * 3600 + MAX_MINUTES_OR_SECONDS * 60 + MAX_MINUTES_OR_SECONDS;
-
-    let totalSeconds =
-      this.time.hours * 3600 + this.time.minutes * 60 + this.time.seconds;
-
-    totalSeconds = Math.max(0, Math.min(maxTotalSeconds, totalSeconds));
-
-    this.time.hours = Math.floor(totalSeconds / 3600);
-    this.time.minutes = Math.floor((totalSeconds % 3600) / 60);
-    this.time.seconds = totalSeconds % 60;
-  }
-
   _onValueEntryKeyPress(type, event) {
     if (this.remainingSeconds > 0) return Clutter.EVENT_PROPAGATE;
 
     const key = event.get_key_symbol();
-
     if (key === Clutter.KEY_Up) {
       this._setActiveColumn(type);
       this._adjust(type, 1);
@@ -446,7 +668,6 @@ export class Timer {
   _focusAdjacentColumn(type, step) {
     const currentIndex = TIME_PARTS.indexOf(type);
     if (currentIndex < 0) return;
-
     const nextIndex =
       (currentIndex + step + TIME_PARTS.length) % TIME_PARTS.length;
     this._focusColumnEntry(TIME_PARTS[nextIndex]);
@@ -455,44 +676,114 @@ export class Timer {
   _focusColumnEntry(type) {
     const entry = this._valueLabels.get(type);
     if (!entry) return;
-
     entry.grab_key_focus();
     this._setActiveColumn(type);
   }
 
+  acknowledgeTriggered() {
+    this.triggered = false;
+    if (this._autoDismissId) {
+      GLib.source_remove(this._autoDismissId);
+      this._autoDismissId = null;
+    }
+  }
+
+  _setActionButtonsState(isRunning) {
+    const iconName = isRunning
+      ? "media-playback-pause-symbolic"
+      : "media-playback-start-symbolic";
+
+    if (this._startIcon) this._startIcon.icon_name = iconName;
+    if (this._circlePauseIcon) this._circlePauseIcon.icon_name = iconName;
+
+    if (isRunning) {
+      this._startButton.add_style_class_name("gtime-play-button-paused");
+      this._circlePauseButton.add_style_class_name("gtime-play-button-paused");
+    } else {
+      this._startButton.remove_style_class_name("gtime-play-button-paused");
+      this._circlePauseButton.remove_style_class_name(
+        "gtime-play-button-paused",
+      );
+    }
+  }
+
   _toggleTimer() {
+    const nowMs = GLib.get_real_time() / 1000;
     if (this.timerId) {
+      if (this._endTimeMs) {
+        this._pausedRemainingMs = Math.max(0, this._endTimeMs - nowMs);
+        this.remainingSeconds = Math.ceil(this._pausedRemainingMs / 1000);
+      }
+      this.endTime = null;
+      this._endTimeMs = null;
       this.stop();
-      this._startButton.label = _("Resume");
-      this._startButton.remove_style_class_name("gtime-start-button-paused");
+
+      if (this.remainingSeconds <= 0) {
+        this._finishTimer();
+        return;
+      }
+
+      this._setActionButtonsState(false);
+      this._syncTimeFromRemaining();
+      this._indicator.updatePanelFromMode();
     } else {
       if (this.remainingSeconds === 0) {
         this.remainingSeconds =
           this.time.hours * 3600 + this.time.minutes * 60 + this.time.seconds;
+        this._pausedRemainingMs = this.remainingSeconds * 1000;
+        if (this.remainingSeconds > 0) {
+          this._lastDurationSeconds = this.remainingSeconds;
+        }
       }
 
       if (this.remainingSeconds > 0) {
-        this.triggered = false;
-        this._startButton.label = _("Pause");
-        this._startButton.add_style_class_name("gtime-start-button-paused");
+        const durationMs =
+          this._pausedRemainingMs > 0
+            ? this._pausedRemainingMs
+            : this.remainingSeconds * 1000;
+        this._endTimeMs = nowMs + durationMs;
+        this.endTime = Math.round(this._endTimeMs / 1000);
+        this.acknowledgeTriggered();
+        this._setActionButtonsState(true);
         this._setEditingEnabled(false);
+        this._syncTimeFromRemaining();
         this._indicator.updatePanelFromMode();
 
-        this.timerId = GLib.timeout_add_seconds(
+        this.timerId = GLib.timeout_add(
           GLib.PRIORITY_DEFAULT,
-          1,
+          1000,
           this._tick.bind(this),
         );
         GLib.Source.set_name_by_id(this.timerId, "[g-time] countdown");
+
+        this._animTimerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 60, () => {
+          if (this._circleCanvas && this._indicator.menu.isOpen) {
+            this._circleCanvas.queue_repaint();
+          }
+          return GLib.SOURCE_CONTINUE;
+        });
+        GLib.Source.set_name_by_id(
+          this._animTimerId,
+          "[g-time] countdown-anim",
+        );
       }
     }
 
     this._updateStartButtonState();
+    this._updateActiveView();
     this._indicator.queueSave();
   }
 
   _tick() {
-    this.remainingSeconds = Math.max(0, this.remainingSeconds - 1);
+    if (this._endTimeMs) {
+      const nowMs = GLib.get_real_time() / 1000;
+      this.remainingSeconds = Math.max(
+        0,
+        Math.round((this._endTimeMs - nowMs) / 1000),
+      );
+    } else {
+      this.remainingSeconds = Math.max(0, this.remainingSeconds - 1);
+    }
     this._syncTimeFromRemaining();
     this._indicator.updatePanelFromMode();
 
@@ -500,15 +791,52 @@ export class Timer {
       this._finishTimer();
       return GLib.SOURCE_REMOVE;
     }
+
     return GLib.SOURCE_CONTINUE;
   }
 
+  _startWithDuration(totalSeconds) {
+    this.stop();
+    this.triggered = false;
+    this._lastDurationSeconds = totalSeconds;
+    this.remainingSeconds = totalSeconds;
+    this._syncTimeFromRemaining();
+    this._toggleTimer();
+  }
+
   _finishTimer() {
+    const completedDuration = this._lastDurationSeconds;
+    this.endTime = null;
+    this._endTimeMs = null;
     this._resetTimer();
     this.triggered = true;
     this._indicator.updatePanelFromMode();
     this._indicator.queueSave();
-    Main.notify(_("Timer Complete"), _("Your time is up!"));
+
+    try {
+      const source = MessageTray.getSystemNotifyingSource();
+      const notification = new MessageTray.Notification({
+        source,
+        title: _("Timer Complete"),
+        body: _("Your time is up!"),
+        isTransient: false,
+      });
+
+      notification.addAction(_("+1m"), () => {
+        this._startWithDuration(60);
+      });
+
+      if (completedDuration > 0) {
+        notification.addAction(_("Repeat"), () => {
+          this._startWithDuration(completedDuration);
+        });
+      }
+
+      source.addNotification(notification);
+    } catch (e) {
+      Main.notify(_("Timer Complete"), _("Your time is up!"));
+    }
+
     try {
       global.display
         .get_sound_player()
@@ -517,18 +845,14 @@ export class Timer {
       console.warn("[g-time] Failed to play sound", e);
     }
 
-    // Auto-dismiss the red warning state after 15 seconds
     if (this._autoDismissId) {
       GLib.source_remove(this._autoDismissId);
     }
-
     this._autoDismissId = GLib.timeout_add_seconds(
       GLib.PRIORITY_DEFAULT,
       15,
       () => {
         this._autoDismissId = null;
-
-        // Only dismiss if it hasn't already been acknowledged by the user
         if (this.triggered) {
           this.triggered = false;
           this._indicator.updatePanelFromMode();
@@ -537,19 +861,20 @@ export class Timer {
         return GLib.SOURCE_REMOVE;
       },
     );
+    GLib.Source.set_name_by_id(this._autoDismissId, "[g-time] auto-dismiss");
   }
 
   _resetTimer() {
     this.stop();
     this.remainingSeconds = 0;
+    this._pausedRemainingMs = 0;
+    this.endTime = null;
+    this._endTimeMs = null;
     this.time = { hours: 0, minutes: 0, seconds: 0 };
     this.triggered = false;
-    this._lastQuickButton = null;
-    this._renderTime();
-
-    this._startButton.label = _("Start");
-    this._startButton.remove_style_class_name("gtime-start-button-paused");
+    this._setActionButtonsState(false);
     this._setEditingEnabled(true);
+    this._renderTime();
     this._indicator.updatePanelFromMode();
     this._indicator.queueSave();
   }

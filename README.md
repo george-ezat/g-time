@@ -29,10 +29,10 @@
 
 <div align="center">
     <img src="./assets/01.png" alt="g-time timer tab" width="32%" />
-    <img src="./assets/02.png" alt="g-time timer configured" width="32%" />
     <img src="./assets/03.png" alt="g-time running countdown" width="32%" />
-    <img src="./assets/04.png" alt="g-time stopwatch tab" width="32%" />
     <img src="./assets/05.png" alt="g-time reminder tab" width="32%" />
+    <img src="./assets/02.png" alt="g-time timer configured" width="32%" />
+    <img src="./assets/04.png" alt="g-time stopwatch tab" width="32%" />
     <img src="./assets/06.png" alt="g-time running reminder" width="32%" />
 </div>
 
@@ -42,8 +42,7 @@
 
 - **Timer**
     - Additive quick start with presets (e.g., `+5m`, `+10m`, `+1h`).
-    - Precision custom picker for hours, minutes, and seconds.
-    - Smart input normalization (overflow auto-carried between units).
+    - **Two-State UI:** Calculator-style precision picker seamlessly transitions into a sleek, interactive circular countdown dial when running.
 - **Stopwatch**
     - Dedicated tab for elapsed time tracking with pause, resume, and reset.
     - Continues running in the background when the menu is closed.
@@ -51,7 +50,9 @@
     - Set alerts for specific dates and times (AM/PM supported).
     - Native GNOME notifications and system sound alerts.
 - **Dynamic Panel Integration**
-    - Top bar dynamically displays active tools and aggregated counts.
+    - Top bar dynamically displays active tools side-by-side.
+    - **Quick Controls:** Right-click the top bar pill to instantly pause/resume without opening the menu. On the *left* for the **Timer**, and on the *right* for the **Stopwatch**.
+    - **Scroll Navigation:** Scroll your mouse wheel over the top bar to cycle between Timer, Stopwatch, and Reminder tabs.
     - Visual alerts: warning (yellow at 60s), critical (red at 10s).
 - **Persistent Storage**
     - Reminders and timer states are saved between sessions.
@@ -88,7 +89,7 @@ Once installed and enabled, you will see the g-time icon in your GNOME top panel
 
 ### Configuration
 
-g-time is designed to work out-of-the-box. For advanced configuration, refer to the extension settings in the GNOME Extensions app or edit the configuration files directly if needed.
+g-time is designed to work perfectly out-of-the-box. All timers, stopwatches, and reminders are configured directly from the top bar menu, requiring no external preferences window.
 
 ---
 

@@ -38,7 +38,7 @@ import {
 export const Indicator = GObject.registerClass(
   class Indicator extends PanelMenu.Button {
     _init() {
-      super._init(0.0, _("g-time Indicator"));
+      super._init(0.5, _("g-time Indicator"));
       this.add_style_class_name("gtime-panel-button");
 
       this._storage = new TimeStorage();
@@ -99,16 +99,43 @@ export const Indicator = GObject.registerClass(
       this._buildMenuUi();
       this._loadState();
 
-      this.menu.connect("open-state-changed", (menu, isOpen) => {
-        if (isOpen) {
-          let changed = false;
+      this._isDestroyed = false;
 
-          if (this._timer.triggered) {
-            this._timer.triggered = false;
-            changed = true;
+      this.connect("scroll-event", (_actor, event) => {
+        const direction = event.get_scroll_direction();
+        const tabs = ["timer", "stopwatch", "reminder"];
+        const idx = tabs.indexOf(this._currentTab);
+        if (direction === Clutter.ScrollDirection.UP) {
+          this._switchTab(tabs[(idx - 1 + tabs.length) % tabs.length]);
+          return Clutter.EVENT_STOP;
+        } else if (direction === Clutter.ScrollDirection.DOWN) {
+          this._switchTab(tabs[(idx + 1) % tabs.length]);
+          return Clutter.EVENT_STOP;
+        }
+        return Clutter.EVENT_PROPAGATE;
+      });
+
+      this.connect("captured-event", (_actor, event) => {
+        const type = event.type();
+        if (
+          (type === Clutter.EventType.BUTTON_PRESS ||
+            type === Clutter.EventType.BUTTON_RELEASE) &&
+          (event.get_button() === Clutter.BUTTON_SECONDARY ||
+            event.get_button() === Clutter.BUTTON_MIDDLE)
+        ) {
+          if (type === Clutter.EventType.BUTTON_PRESS) {
+            this._onQuickToggle(event);
           }
+          return Clutter.EVENT_STOP;
+        }
+        return Clutter.EVENT_PROPAGATE;
+      });
 
-          if (changed) {
+      this.menu.connect("open-state-changed", (_menu, isOpen) => {
+        if (isOpen) {
+          this._reminder.refreshListIfVisible();
+          if (this._timer.triggered) {
+            this._timer.acknowledgeTriggered();
             this.updatePanelFromMode();
             this.queueSave();
           }
@@ -116,7 +143,60 @@ export const Indicator = GObject.registerClass(
       });
     }
 
+    _getTargetBoxFromEvent(event) {
+      const timerVisible = this._timerBox.visible;
+      const stopwatchVisible = this._stopwatchBox.visible;
+
+      if (timerVisible && !stopwatchVisible) return "timer";
+      if (stopwatchVisible && !timerVisible) return "stopwatch";
+      if (!timerVisible && !stopwatchVisible) return null;
+
+      // Both Timer and Stopwatch are visible in the top bar:
+      // Determine which side of the indicator the user clicked using stage coordinates.
+      const [evX] = event.get_coords();
+      const [timerX] = this._timerBox.get_transformed_position();
+      const [timerW] = this._timerBox.get_transformed_size();
+      const [swX] = this._stopwatchBox.get_transformed_position();
+
+      // Calculate the midpoint in the gap between the Timer box and Stopwatch box
+      const splitX = (timerX + timerW + swX) / 2;
+      return evX <= splitX ? "timer" : "stopwatch";
+    }
+
+    _onQuickToggle(event) {
+      const targetBox = this._getTargetBoxFromEvent(event);
+
+      // 1. If the Timer alarm is currently flashing red:
+      //    - If the user clicked the Timer pill (or Stopwatch isn't visible), acknowledge the Timer alarm.
+      //    - If both are visible and the user specifically right-clicked the Stopwatch pill, toggle the Stopwatch!
+      if (this._timer.triggered && targetBox !== "stopwatch") {
+        this._timer.acknowledgeTriggered();
+        this.updatePanelFromMode();
+        this.queueSave();
+        return;
+      }
+
+      // 2. If both or either indicator pill is visible on the panel, toggle the exact one clicked
+      if (targetBox === "timer") {
+        this._timer._toggleTimer();
+        return;
+      }
+      if (targetBox === "stopwatch") {
+        this._stopwatch._toggleStopwatch();
+        return;
+      }
+
+      // 3. Neither Timer nor Stopwatch is currently visible on the panel (Idle / Default Icon state):
+      //    Prioritize the currently selected tab in the menu, falling back to any configured timer.
+      if (this._currentTab === "stopwatch") {
+        this._stopwatch._toggleStopwatch();
+      } else if (this._timer._hasConfiguredTime()) {
+        this._timer._toggleTimer();
+      }
+    }
+
     queueSave() {
+      if (this._isDestroyed) return;
       if (this._saveTimeoutId) {
         GLib.source_remove(this._saveTimeoutId);
       }
@@ -125,9 +205,11 @@ export const Indicator = GObject.registerClass(
         this._saveStateAsync();
         return GLib.SOURCE_REMOVE;
       });
+      GLib.Source.set_name_by_id(this._saveTimeoutId, "[g-time] save-state");
     }
 
     async _saveStateAsync() {
+      if (this._isDestroyed) return;
       const state = {
         currentTab: this._currentTab,
         ...this._timer.getState(),
@@ -139,12 +221,11 @@ export const Indicator = GObject.registerClass(
 
     async _loadState() {
       const state = await this._storage.readState();
-      if (!state) return;
+      if (!state || this._isDestroyed) return;
 
       if (state.currentTab) {
         this._switchTab(state.currentTab);
       }
-
       this._timer.loadState(state);
       this._stopwatch.loadState(state);
       this._reminder.loadState(state);
@@ -164,8 +245,6 @@ export const Indicator = GObject.registerClass(
         vertical: true,
         style_class: "gtime-container",
       });
-      container.set_height(430);
-      container.set_width(380);
 
       const headerRow = new St.BoxLayout({
         style_class: "gtime-header-row",
@@ -301,6 +380,11 @@ export const Indicator = GObject.registerClass(
 
       // Handle Timer Display
       if (this._timer.timerId || this._timer.remainingSeconds > 0) {
+        if (this._timer.timerId) {
+          this._timerBox.remove_style_class_name("gtime-indicator-paused");
+        } else {
+          this._timerBox.add_style_class_name("gtime-indicator-paused");
+        }
         activeCount++;
         this._timerBox.visible = true;
 
@@ -327,6 +411,11 @@ export const Indicator = GObject.registerClass(
 
       // Handle Stopwatch Display
       if (this._stopwatch.timerId || this._stopwatch.seconds > 0) {
+        if (this._stopwatch.timerId) {
+          this._stopwatchBox.remove_style_class_name("gtime-indicator-paused");
+        } else {
+          this._stopwatchBox.add_style_class_name("gtime-indicator-paused");
+        }
         activeCount++;
         this._stopwatchBox.visible = true;
 
@@ -372,10 +461,12 @@ export const Indicator = GObject.registerClass(
     }
 
     destroy() {
+      this._isDestroyed = true;
       if (this._saveTimeoutId) {
         GLib.source_remove(this._saveTimeoutId);
         this._saveTimeoutId = null;
       }
+
       const state = {
         currentTab: this._currentTab,
         ...this._timer.getState(),
